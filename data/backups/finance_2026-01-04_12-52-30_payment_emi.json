@@ -1,0 +1,90 @@
+{
+  "loans": [
+    {
+      "name": "ICICI",
+      "principal": 1200000.0,
+      "rate": 10.75,
+      "loan_type": "BANK",
+      "interest_frequency": "MONTHLY",
+      "created_at": "2026-01-03T18:52:25.771704",
+      "payments": [
+        {
+          "date": "2022-10-01T00:00:00",
+          "amount": 22687.533500014884,
+          "note": "EMI"
+        },
+        {
+          "date": "2022-11-01T00:00:00",
+          "amount": 22687.533500014884,
+          "note": "EMI"
+        },
+        {
+          "date": "2022-12-01",
+          "amount": 22687.533500014884,
+          "note": "EMI"
+        },
+        {
+          "date": "2023-01-01",
+          "amount": 22687.533500014884,
+          "note": "EMI"
+        },
+        {
+          "date": "2023-02-01",
+          "amount": 22687.533500014884,
+          "note": "EMI"
+        },
+        {
+          "date": "2023-03-01",
+          "amount": 22687.533500014884,
+          "note": "EMI"
+        },
+        {
+          "date": "2023-04-01",
+          "amount": 22687.533500014884,
+          "note": "EMI"
+        }
+      ],
+      "tenure": 72,
+      "emi": 22687.533500014884,
+      "start_month": "2022-10",
+      "loan_no": "2345432",
+      "taken_amount": 1200000.0
+    },
+    {
+      "name": "samara",
+      "principal": 800000.0,
+      "rate": 13.5,
+      "loan_type": "BANK",
+      "interest_frequency": "MONTHLY",
+      "created_at": "2026-01-03T18:53:12.646786",
+      "payments": [],
+      "tenure": 72,
+      "emi": 16271.16973801954,
+      "start_month": "2026-02",
+      "loan_no": "6746767",
+      "taken_amount": 800000.0
+    },
+    {
+      "name": "Hima",
+      "principal": 350000.0,
+      "rate": 24.0,
+      "loan_type": "INTEREST_ONLY",
+      "interest_frequency": "MONTHLY",
+      "created_at": "2026-01-03T18:54:19.348139",
+      "payments": [
+        {
+          "date": "2025-09-01",
+          "amount": 8000.0,
+          "note": "INTEREST"
+        },
+        {
+          "date": "2025-10-01",
+          "amount": 50000,
+          "note": "PRINCIPAL"
+        }
+      ],
+      "start_month": "2025-09",
+      "taken_amount": 400000.0
+    }
+  ]
+}
