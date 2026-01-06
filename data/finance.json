@@ -1,22 +1,400 @@
 {
   "loans": [
     {
-      "name": "Car Loan",
-      "principal": 45216.67,
-      "taken_amount": 50000,
-      "rate": 10,
+      "name": "ICICI",
+      "principal": 612518.15,
+      "taken_amount": 1200000.0,
+      "rate": 10.84,
       "loan_type": "BANK",
       "interest_frequency": "MONTHLY",
-      "start_date": "2024-01-01",
+      "start_date": "2022-10-22",
       "payments": [
         {
+          "date": "2022-10-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2022-11-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2022-12-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2023-01-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2023-02-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2023-03-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2023-04-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2023-05-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2023-06-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2023-07-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2023-08-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2023-09-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2023-10-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2023-11-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2023-12-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2024-01-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2024-02-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
           "date": "2024-03-01",
-          "amount": 5200,
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2024-04-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2024-05-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2024-06-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2024-07-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2024-08-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2024-09-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2024-10-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2024-11-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2024-12-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2025-01-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2025-02-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2025-03-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2025-04-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2025-05-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2025-06-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2025-07-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2025-08-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2025-09-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2025-10-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2025-11-01",
+          "amount": 22742.675465324784,
+          "note": "EMI"
+        },
+        {
+          "date": "2025-12-01",
+          "amount": 22742.675465324784,
           "note": "EMI"
         }
       ],
-      "tenure": 10,
-      "emi": 5200
+      "tenure": 72,
+      "emi": 22742.675465324784,
+      "loan_no": "1",
+      "start_month": "2022-09"
+    },
+    {
+      "name": "samara",
+      "principal": 700625.95,
+      "taken_amount": 800000.0,
+      "rate": 11.1,
+      "loan_type": "BANK",
+      "interest_frequency": "MONTHLY",
+      "start_date": "2025-03-01",
+      "payments": [
+        {
+          "date": "2025-03-01",
+          "amount": 15268.269814120902,
+          "note": "EMI"
+        },
+        {
+          "date": "2025-04-01",
+          "amount": 15268.269814120902,
+          "note": "EMI"
+        },
+        {
+          "date": "2025-05-01",
+          "amount": 15268.269814120902,
+          "note": "EMI"
+        },
+        {
+          "date": "2025-06-01",
+          "amount": 15268.269814120902,
+          "note": "EMI"
+        },
+        {
+          "date": "2025-07-01",
+          "amount": 15268.269814120902,
+          "note": "EMI"
+        },
+        {
+          "date": "2025-08-01",
+          "amount": 15268.269814120902,
+          "note": "EMI"
+        },
+        {
+          "date": "2025-09-01",
+          "amount": 15268.269814120902,
+          "note": "EMI"
+        },
+        {
+          "date": "2025-10-01",
+          "amount": 15268.269814120902,
+          "note": "EMI"
+        },
+        {
+          "date": "2025-11-01",
+          "amount": 15268.269814120902,
+          "note": "EMI"
+        },
+        {
+          "date": "2025-12-01",
+          "amount": 15268.269814120902,
+          "note": "EMI"
+        }
+      ],
+      "tenure": 72,
+      "emi": 15268.269814120902,
+      "loan_no": "2",
+      "start_month": "2025-02"
+    },
+    {
+      "name": "Mama",
+      "principal": 550000.0,
+      "taken_amount": 550000.0,
+      "rate": 24.0,
+      "loan_type": "INTEREST_ONLY",
+      "interest_frequency": "MONTHLY",
+      "start_date": "2025-07-01",
+      "payments": [
+        {
+          "date": "2025-07-01",
+          "amount": 11000.0,
+          "note": "INTEREST"
+        },
+        {
+          "date": "2025-08-01",
+          "amount": 11000.0,
+          "note": "INTEREST"
+        },
+        {
+          "date": "2025-09-01",
+          "amount": 11000.0,
+          "note": "INTEREST"
+        },
+        {
+          "date": "2025-10-01",
+          "amount": 11000.0,
+          "note": "INTEREST"
+        },
+        {
+          "date": "2025-11-01",
+          "amount": 11000.0,
+          "note": "INTEREST"
+        },
+        {
+          "date": "2025-12-01",
+          "amount": 11000.0,
+          "note": "INTEREST"
+        },
+        {
+          "date": "2026-01-01",
+          "amount": 11000.0,
+          "note": "INTEREST"
+        }
+      ],
+      "start_month": "2025-07"
+    },
+    {
+      "name": "Mama1",
+      "principal": 600000.0,
+      "taken_amount": 600000.0,
+      "rate": 30.0,
+      "loan_type": "INTEREST_ONLY",
+      "interest_frequency": "MONTHLY",
+      "start_date": "2025-09-01",
+      "payments": [
+        {
+          "date": "2025-09-01",
+          "amount": 15000.0,
+          "note": "INTEREST"
+        },
+        {
+          "date": "2025-10-01",
+          "amount": 15000.0,
+          "note": "INTEREST"
+        },
+        {
+          "date": "2025-11-01",
+          "amount": 15000.0,
+          "note": "INTEREST"
+        },
+        {
+          "date": "2025-12-01",
+          "amount": 15000.0,
+          "note": "INTEREST"
+        },
+        {
+          "date": "2026-01-01",
+          "amount": 15000.0,
+          "note": "INTEREST"
+        }
+      ],
+      "start_month": "2025-09"
+    },
+    {
+      "name": "Hima",
+      "principal": 400000.0,
+      "taken_amount": 400000.0,
+      "rate": 24.0,
+      "loan_type": "INTEREST_ONLY",
+      "interest_frequency": "MONTHLY",
+      "start_date": "2025-09-08",
+      "payments": [
+        {
+          "date": "2025-09-01",
+          "amount": 8000.0,
+          "note": "INTEREST"
+        },
+        {
+          "date": "2025-10-01",
+          "amount": 8000.0,
+          "note": "INTEREST"
+        },
+        {
+          "date": "2025-11-01",
+          "amount": 8000.0,
+          "note": "INTEREST"
+        },
+        {
+          "date": "2025-12-01",
+          "amount": 8000.0,
+          "note": "INTEREST"
+        },
+        {
+          "date": "2026-01-01",
+          "amount": 8000.0,
+          "note": "INTEREST"
+        }
+      ],
+      "start_month": "2025-09"
     }
   ]
 }

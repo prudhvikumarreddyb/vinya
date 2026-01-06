@@ -8,8 +8,15 @@ NO calculations here
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-
+from core.health_store import health_today_summary
+from core.shared_insights import finance_health_insight
+from core.finance_store import dashboard_summary
+from core.health_store import protect_streak
 from core.finance_store import load_finance
+from core.health_store import weekly_health_recap
+from core.health_store import health_signal_today
+from core.health_store import health_dashboard_card
+
 from core.finance_metrics import (
     portfolio_summary,
     loan_outstanding,
@@ -17,7 +24,19 @@ from core.finance_metrics import (
     loan_health_status,
     next_gentle_action,
 )
+from core.life_store import gentle_life_insight
 
+insight = gentle_life_insight()
+
+if insight:
+    st.markdown("### 🧠 Gentle Insight")
+    st.info(insight)
+
+if protect_streak():
+    st.warning(
+        "🫶 You’ve had a few heavy days in a row. "
+        "Consider resting, reducing load, or talking to someone you trust."
+    )
 # ==================================================
 # SESSION STATE
 # ==================================================
@@ -29,6 +48,55 @@ if "insight_history" not in st.session_state:
 # ==================================================
 def render_dashboard():
     st.subheader("🏠 Dashboard")
+    st.markdown("### 🧠 Health")
+# ==================================================
+# 🩺 TODAY’S HEALTH
+# ==================================================
+    signal = health_signal_today()
+
+    status_color = {
+        "PROTECT": "🟥",
+        "BALANCE": "🟡",
+        "OPTIMIZE": "🟢"
+    }.get(signal["status"], "🟡")
+
+    st.markdown("### 🩺 Today’s Health")
+    st.info(f"{status_color} **{signal['status']}** — {signal['message']}")
+
+    recap = weekly_health_recap()
+
+    if recap:
+        st.markdown("### 🧠 Weekly Health Reflection")
+        st.info(recap["message"])
+    if st.button("➕ Log today (quick)"):
+        from core.health_store import quick_log_today
+
+        quick_log_today()
+        st.toast("Health logged. Thanks for checking in 🤍")
+        st.rerun()
+
+    health = health_today_summary()
+
+    with st.container():
+        st.markdown(
+            f"""
+            <div style="
+                background:{health['color']};
+                padding:14px;
+                border-radius:10px;
+                margin-bottom:12px;
+            ">
+                <strong>🧠 Health Today</strong><br/>
+                {health['message']}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        finance = dashboard_summary()
+        gentle = finance_health_insight(finance, health["status"])
+
+        if gentle:
+            st.info(gentle)
 
     data = load_finance()
     loans = data.get("loans", [])
@@ -105,3 +173,19 @@ def render_dashboard():
         use_container_width=True,
         hide_index=True,
     )
+# ==================================================
+# 🧠 HEALTH — TODAY
+# ==================================================
+st.markdown("### 🧠 Today’s Health")
+
+health = health_dashboard_card()
+
+status = health["status"]
+message = health["message"]
+
+if status == "SAFE":
+    st.success(f"🟢 {message}")
+elif status == "CARE":
+    st.warning(f"🟡 {message}")
+else:
+    st.error(f"🔴 {message}")

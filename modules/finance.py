@@ -2,7 +2,7 @@ import inspect
 import streamlit as st
 import pandas as pd
 from datetime import datetime, date
-
+from core.life_store import gentle_life_insight
 from core.finance_store import (
     load_finance,
     save_finance,
@@ -619,7 +619,9 @@ def render_finance():
     if family_loans:
         st.markdown("### 👨‍👩‍👧 Friends / Family Loans")
         st.dataframe(pd.DataFrame(build_rows(family_loans)), use_container_width=True)
-
+    insight = gentle_life_insight()
+    if insight:
+        st.caption(f"🧠 {insight}")
     # ==================================================
     # ➕ ADD LOAN (VALIDATED)
     # ==================================================
