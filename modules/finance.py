@@ -17,17 +17,47 @@ from core.finance_store import (
     calculate_emis_elapsed,
     calculate_emis_overdue,
 )
+if "active_loan_index" not in st.session_state:
+    st.session_state.active_loan_index = None
 
 # ==================================================
 # THEME
 # ==================================================
 st.markdown("""
 <style>
-.block-container { padding-top: 1rem; }
-.vinya-muted { color: #9aa4b2; font-size: 0.9rem; }
-.vinya-good { color: #2ecc71; font-weight: 600; }
+.block-container {
+    padding-top: 1rem;
+    max-width: 1100px;
+}
+
+h2, h3 {
+    margin-bottom: 0.4rem;
+}
+
+.vinya-muted {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.vinya-good {
+    color: #16a34a;
+    font-weight: 600;
+}
+
+div[data-testid="stMetric"] {
+    background: #f9fafb;
+    padding: 12px;
+    border-radius: 10px;
+}
+
+hr {
+    margin: 1.5rem 0;
+    border: none;
+    border-top: 1px solid #e5e7eb;
+}
 </style>
 """, unsafe_allow_html=True)
+
 # ==================================================
 # DELETE UNDO STATE
 # ==================================================
@@ -36,15 +66,22 @@ if "undo_delete" not in st.session_state:
 # ==================================================
 # BACKWARD-COMPAT PAYMENT WRAPPER
 # ==================================================
-def safe_add_payment(loan_index, amount, note, month_key=None):
+def safe_add_payment(loan_index, amount, note, month_key):
+    """
+    STRICT payment wrapper.
+    Never drops month_key.
+    Never swallows errors.
+    """
     try:
-        sig = inspect.signature(add_payment)
-        if "month_key" in sig.parameters:
-            add_payment(loan_index, amount, note, month_key=month_key)
-        else:
-            add_payment(loan_index, amount, note)
-    except Exception:
-        add_payment(loan_index, amount, note)
+        add_payment(
+            loan_index=loan_index,
+            amount=amount,
+            note=note,
+            month_key=month_key
+        )
+    except Exception as e:
+        st.error(f"Payment failed: {e}")
+        raise
 
 # ==================================================
 # HELPERS
@@ -72,7 +109,6 @@ def current_month_key():
 
 def month_key_to_label(key):
     return datetime.strptime(key, "%Y-%m").strftime("%B %Y")
-
 
 def derive_start_month(loan):
     if loan.get("start_month"):
@@ -107,11 +143,13 @@ def month_range(start_key, end_key):
 
 
 def payment_months(loan, note):
+    note = note.upper()
     return {
         datetime.fromisoformat(p["date"]).strftime("%Y-%m")
         for p in loan.get("payments", [])
-        if p.get("note") == note and p.get("date")
+        if p.get("note", "").upper() == note and p.get("date")
     }
+
 
 
 def payment_done_for_month(loan, month_key):
@@ -276,6 +314,131 @@ def repair_old_payments():
         save_finance(data, tag="repair_payments")
 
     return fixes
+def validate_bank_loan(name, principal, rate, start_date, loan_no, tenure):
+    errors = {}
+    if not name.strip():
+        errors["name"] = "Loan name is required"
+    if principal <= 0:
+        errors["principal"] = "Principal must be greater than 0"
+    if rate <= 0:
+        errors["rate"] = "Interest rate must be greater than 0"
+    if not start_date:
+        errors["start_date"] = "Start date is required"
+    if not loan_no.strip():
+        errors["loan_no"] = "Loan number is required"
+    if tenure <= 0:
+        errors["tenure"] = "Tenure must be at least 1 month"
+    return errors
+
+
+def validate_family_loan(name, principal, rate, start_date):
+    errors = {}
+    if not name.strip():
+        errors["name"] = "Loan name is required"
+    if principal <= 0:
+        errors["principal"] = "Principal must be greater than 0"
+    if rate <= 0:
+        errors["rate"] = "Interest rate must be greater than 0"
+    if not start_date:
+        errors["start_date"] = "Start date is required"
+    return errors
+def last_interest_payment(loan):
+    payments = [
+        p for p in loan.get("payments", [])
+        if p.get("note") == "INTEREST"
+    ]
+    if not payments:
+        return None
+    latest = max(
+        payments,
+        key=lambda p: p.get("date", "")
+    )
+    return datetime.fromisoformat(latest["date"]).strftime("%d %b %Y")
+def gentle_finance_insights(loans):
+    insights = []
+
+    if not loans:
+        return insights
+
+    # Biggest monthly outflow
+    biggest = None
+    biggest_amt = 0
+
+    for loan in loans:
+        if loan["loan_type"] == "BANK":
+            amt = loan.get("emi", 0)
+        else:
+            amt = calculate_interest_only(
+                loan.get("principal", 0),
+                loan.get("rate", 0),
+                loan.get("interest_frequency", "MONTHLY")
+            )
+
+        if amt > biggest_amt:
+            biggest_amt = amt
+            biggest = loan.get("name")
+
+    if biggest:
+        insights.append(
+            f"💸 **{biggest}** is currently your highest monthly outflow."
+        )
+
+    # Long untouched loans
+    for loan in loans:
+        if not loan.get("payments"):
+            insights.append(
+                f"⏳ **{loan.get('name')}** hasn’t had any payments yet."
+            )
+
+    if not insights:
+        insights.append("🌱 Everything looks steady. No action needed right now.")
+
+    return insights
+def next_gentle_action(loans):
+    if not loans:
+        return "Start by adding your first loan — everything else will build naturally."
+
+    # Bank loan overdue
+    for loan in loans:
+        if loan.get("loan_type") == "BANK" and calculate_emis_overdue(loan) > 0:
+            return f"Consider catching up on **{loan.get('name')}** to reduce stress."
+
+    # No interest paid yet for family loans
+    for loan in loans:
+        if loan.get("loan_type") == "INTEREST_ONLY":
+            has_interest = any(
+                p.get("note") == "INTEREST" for p in loan.get("payments", [])
+            )
+            if not has_interest:
+                return f"A small interest payment on **{loan.get('name')}** could keep things smooth."
+
+    # Otherwise calm state
+    return "No immediate action needed — you’re in a stable spot this month 🌱"
+
+def record_insight_snapshot(loans):
+    """
+    Stores only 1 insight per day.
+    """
+    data = load_finance()
+    history = data.setdefault("insight_history", [])
+
+    today = date.today().isoformat()
+    if history and history[-1]["date"] == today:
+        return  # already recorded today
+
+    history.append({
+        "date": today,
+        "summary": next_gentle_action(loans)
+    })
+
+    # keep last 30 only
+    data["insight_history"] = history[-30:]
+    save_finance(data, tag="insight_snapshot")
+
+
+def load_insight_history():
+    data = load_finance()
+    return data.get("insight_history", [])
 
 # ==================================================
 # MAIN UI
@@ -358,14 +521,10 @@ def render_finance():
 
             st.rerun()
 
-    # migrate start_month
-    migrated = False
-    for loan in loans:
-        if not loan.get("start_month"):
-            derive_start_month(loan)
-            migrated = True
-    if migrated:
-        save_finance(data, tag="migrate_start_month")
+    st.markdown("### 🧠 Gentle Insights")
+
+    for tip in gentle_finance_insights(loans):
+        st.info(tip)
 
     # ==================================================
     # 📊 LOANS OVERVIEW
@@ -394,23 +553,12 @@ def render_finance():
 
     def build_rows(items):
         rows = []
-        for loan in items:
-            monthly = (
-        loan.get("emi", 0)
-        if loan["loan_type"] == "BANK"
-        else calculate_interest_only(
-            loan.get("principal", 0),
-            loan.get("rate", 0),
-            loan.get("interest_frequency", "MONTHLY")
-        )
-    )
 
-            emi_paid = calculate_emis_paid(loan)
-            emi_elapsed = calculate_emis_elapsed(loan)
-            emi_overdue = calculate_emis_overdue(loan)
+        for loan in items:
             payments = loan.get("payments", [])
             total_paid = sum((p.get("amount") or 0) for p in payments)
 
+            # ---------------- BANK LOANS ----------------
             if loan["loan_type"] == "BANK":
                 try:
                     schedule, rem_principal = build_amortization_schedule(loan)
@@ -419,39 +567,47 @@ def render_finance():
                     rem_principal = loan.get("principal", 0)
                     rem_interest = 0
 
-                monthly = loan.get("emi") or 0
-                paid_count = sum(1 for p in payments if p.get("note") == "EMI")
+                taken = loan.get("taken_amount", loan.get("principal", 0))
+                progress = loan_progress_percent(loan)
+                emi_paid = calculate_emis_paid(loan)
+
+                rows.append({
+                    "Loan Name": loan.get("name", "—"),
+                    "Health": loan_health_badge(loan),
+                    "Amount Taken (₹)": f"₹ {taken:,.2f}",
+                    "Start Month": loan.get("start_month", "—"),
+                    "Monthly EMI (₹)": f"₹ {loan.get('emi', 0):,.2f}",
+                    "EMIs Paid": emi_paid,
+                    "Progress": f"{progress}%",
+                    "Principal Left (₹)": f"₹ {rem_principal:,.2f}",
+                    "Interest Left (₹)": f"₹ {rem_interest:,.2f}",
+                    "Total Due (₹)": f"₹ {(rem_principal + rem_interest):,.2f}",
+                    "Paid So Far (₹)": f"₹ {total_paid:,.2f}",
+                })
+
+            # ---------------- FRIENDS / FAMILY ----------------
             else:
-                rem_principal = loan.get("principal", 0)
-                rem_interest = 0
-                monthly = calculate_interest_only(
+                monthly_interest = calculate_interest_only(
                     loan.get("principal", 0),
                     loan.get("rate", 0),
                     loan.get("interest_frequency", "MONTHLY")
                 )
-                paid_count = sum(1 for p in payments if p.get("note") == "INTEREST")
 
-            rem_principal = round(rem_principal or 0, 2)
-            rem_interest = round(rem_interest or 0, 2)
-            total_outstanding = rem_principal + rem_interest
-            taken = loan.get("taken_amount", loan.get("principal", 0))
-            progress = loan_progress_percent(loan)
-            health = loan_health_badge(loan)
-            rows.append({
-                "Loan": loan.get("name", "—"),
-                #"Loan No": loan.get("loan_no", "—") if loan["loan_type"] == "BANK" else "—",
-                "Health": health,
-                "Taken Amount (₹)": f"₹ {taken:,.2f}",
-                "Start Month": loan.get("start_month", "—"),
-                "Monthly Amount (₹)": f"₹ {monthly:,.2f}",
-                "EMIs Paid": emi_paid,
-                "Progress": f"{progress}%",
-                "Principal Outstanding (₹)": f"₹ {rem_principal:,.2f}",
-                "Interest Outstanding (₹)": f"₹ {rem_interest:,.2f}",
-                "Total Outstanding (₹)": f"₹ {total_outstanding:,.2f}",
-                "Total Paid (₹)": f"₹ {total_paid:,.2f}",
-            })
+                last_paid = last_interest_payment(loan)
+                last_badge = f"🟣 {last_paid}" if last_paid else "⚪ Never"
+
+                rows.append({
+                    "Loan Name": loan.get("name", "—"),
+                    "Amount Taken (₹)": f"₹ {loan.get('taken_amount', loan.get('principal', 0)):,.2f}",
+                    "Start Month": loan.get("start_month", "—"),
+                    "Monthly Interest (₹)": f"₹ {monthly_interest:,.2f}",
+                    "Principal Left (₹)": f"₹ {loan.get('principal', 0):,.2f}",
+                    "Last Interest Paid": last_badge,
+                    "Paid So Far (₹)": f"₹ {total_paid:,.2f}",
+                })
+
         return rows
+
 
     bank_loans = [l for l in loans if l["loan_type"] == "BANK"]
     family_loans = [l for l in loans if l["loan_type"] == "INTEREST_ONLY"]
@@ -465,78 +621,142 @@ def render_finance():
         st.dataframe(pd.DataFrame(build_rows(family_loans)), use_container_width=True)
 
     # ==================================================
-    # ➕ ADD LOAN
+    # ➕ ADD LOAN (VALIDATED)
     # ==================================================
-    st.markdown("---")
-    with st.expander("➕ Add Loan"):
-        loan_type = st.selectbox("Loan Type", ["Bank (EMI)", "Friends / Family"])
+    st.markdown("<hr/>", unsafe_allow_html=True)
+    with st.expander(
+        "➕ Add Loan",
+        expanded=(len(loans) == 0)  # 👈 auto-open when no loans
+    ):
 
-        name = st.text_input("Loan name")
-        principal = st.number_input("Principal (₹)", min_value=0.0, step=1000.0)
-        rate = st.number_input("Interest rate (%)", min_value=0.0, step=0.1)
+        loan_type = st.selectbox("Loan Type *", ["Bank (EMI)", "Friends / Family"])
+
+        name = st.text_input("Loan name *")
+        principal = st.number_input("Principal (₹) *", min_value=0.0, step=1000.0)
+        rate = st.number_input("Interest rate (%) *", min_value=0.0, step=0.1)
+
         start_date = st.date_input(
-    "Loan start date",
-    value=date.today().replace(day=1),
-    min_value=date(2000, 1, 1),
-    max_value=date.today()
-)
+            "Loan start date *",
+            value=date.today().replace(day=1),
+            min_value=date(2000, 1, 1),
+            max_value=date.today()
+        )
 
-        start_month = start_date.strftime("%Y-%m")
-        if start_date > date.today():
-            raise ValueError("Loan start date cannot be in the future")
+        # ---------------- BANK LOAN ----------------
+        errors = {}  # 👈 ALWAYS initialize
 
         if loan_type == "Bank (EMI)":
-            loan_no = st.text_input("Loan Number")
-            tenure = st.number_input("Tenure (months)", min_value=1)
-            emi = calculate_emi(principal, rate, tenure)
+            loan_no = st.text_input("Loan Number *")
+            tenure = st.number_input("Tenure (months) *", min_value=1)
 
-            if st.button("Save Bank Loan"):
+            emi = calculate_emi(principal, rate, tenure) if principal > 0 and rate > 0 else 0
+            st.caption(f"Calculated EMI: ₹ {emi:,.2f}" if emi else "Calculated EMI will appear here")
+
+
+            errors = validate_bank_loan(
+                name, principal, rate, start_date, loan_no, tenure
+            )
+
+            for e in errors.values():
+                st.error(e)
+
+            if st.button("Save Bank Loan", disabled=len(errors) > 0):
                 add_loan(
                     name=name,
                     principal=principal,
                     rate=rate,
+                    start_date=start_date,
                     tenure=tenure,
                     emi=emi,
                     loan_type="BANK"
                 )
+
                 data = load_finance()
-                data["loans"][-1]["start_month"] = start_month
-                data["loans"][-1]["loan_no"] = loan_no
+                new_index = len(data["loans"]) - 1
+
+                data["loans"][new_index]["loan_no"] = loan_no
+                data["loans"][new_index]["start_date"] = start_date.isoformat()
+                data["loans"][new_index]["start_month"] = start_date.strftime("%Y-%m")
+
                 save_finance(data, tag="add_bank_loan")
+
+
+                st.session_state.active_loan_index = new_index
                 st.success("Bank loan added")
                 st.rerun()
-        else:
-            freq = st.selectbox("Interest frequency", ["MONTHLY", "YEARLY"])
-            if st.button("Save Family Loan"):
+
+        # ---------------- FAMILY LOAN ----------------
+        errors = {}  # 👈 ALWAYS initialize
+
+        if loan_type == "Friends / Family":
+            freq = st.selectbox("Interest frequency *", ["MONTHLY", "YEARLY"])
+
+            errors = validate_family_loan(
+                name, principal, rate, start_date
+            )
+
+            for e in errors.values():
+                st.error(e)
+
+            if st.button("Save Family Loan", disabled=len(errors) > 0):
                 add_loan(
                     name=name,
                     principal=principal,
                     rate=rate,
+                    start_date=start_date,
                     loan_type="INTEREST_ONLY",
                     interest_frequency=freq
                 )
+
+
                 data = load_finance()
-                data["loans"][-1]["start_month"] = start_month
+                new_index = len(data["loans"]) - 1
+
+                data["loans"][new_index]["start_date"] = start_date.isoformat()
+                data["loans"][new_index]["start_month"] = start_date.strftime("%Y-%m")
+
+                st.session_state.active_loan_index = new_index
+
                 save_finance(data, tag="add_family_loan")
+
+
                 st.success("Family loan added")
                 st.rerun()
-
-    if not loans:
-        return
 
     # ==================================================
     # 🔧 MANAGE LOAN
     # ==================================================
-    st.markdown("---")
+    st.markdown("<hr/>", unsafe_allow_html=True)
     st.markdown("## 🔧 Manage Loan")
+
+    # 🛡️ SAFETY: no loans → no manage section
+    if not loans:
+        st.info("No loans available.")
+        return
+
+    default_idx = (
+        st.session_state.active_loan_index
+        if st.session_state.active_loan_index is not None
+        else 0
+    )
 
     idx = st.selectbox(
         "Select a loan",
-        range(len(loans)),
+        options=list(range(len(loans))),
+        index=default_idx,
         format_func=lambda i: loans[i]["name"]
     )
 
+    # reset router after use
+    st.session_state.active_loan_index = None
+
+
+    # 🛡️ Streamlit can briefly return None during reruns
+    if idx is None:
+        st.stop()
+
     loan = loans[idx]
+
 
     st.markdown(f"### 💼 {loan['name']}")
     st.caption(f"📅 Loan start month: {loan['start_month']}")
@@ -545,12 +765,20 @@ def render_finance():
         c1, c2 = st.columns(2)
         c1.caption(f"🏷️ Loan No: {loan.get('loan_no', '—')}")
         c2.caption(f"📊 Total EMIs: {loan.get('tenure', '—')}")
+    if not loan.get("start_month") and loan.get("start_date"):
+        loan["start_month"] = datetime.fromisoformat(
+            loan["start_date"]
+        ).strftime("%Y-%m")
+        save_finance(data, tag="fix_missing_start_month")
 
     months = month_range(loan["start_month"], current_month_key())
+    default_month = oldest_unpaid_month(loan, months)
+    if default_month not in months:
+        default_month = months[0]
     selected_month = st.selectbox(
         "Select payment month",
         months,
-        index=months.index(oldest_unpaid_month(loan, months))
+        index=months.index(default_month)
     )
 
     month_label = month_key_to_label(selected_month)
@@ -576,6 +804,7 @@ def render_finance():
             st.button("Pay Interest", disabled=True)
         else:
             if st.button(f"Pay Interest for {month_label}"):
+                st.caption("ℹ️ Interest payment does not reduce principal for this loan.")
                 safe_add_payment(idx, interest, "INTEREST", selected_month)
                 st.rerun()
 
@@ -587,7 +816,7 @@ def render_finance():
     # ==================================================
     # 📜 PAYMENT HISTORY
     # ==================================================
-    st.markdown("---")
+    st.markdown("<hr/>", unsafe_allow_html=True)
     st.markdown("## 📜 Payment History")
 
     history = build_payment_history(loan)
@@ -599,7 +828,7 @@ def render_finance():
     # ==================================================
     # UNDO / DELETE (UPDATED)
     # ==================================================
-    st.markdown("---")
+    st.markdown("<hr/>", unsafe_allow_html=True)
     c1, c2 = st.columns(2)
 
     with c1:
@@ -639,3 +868,21 @@ def render_finance():
                 st.rerun()
         else:
             st.session_state.undo_delete = None
+    with st.expander("🧠 Insight history"):
+        history = load_insight_history()
+
+        if not history:
+            st.caption("No insights recorded yet.")
+        else:
+            rows = [
+                {
+                    "Date": h["date"],
+                    "Insight": h["summary"]
+                }
+                for h in reversed(history)
+            ]
+            st.dataframe(
+                pd.DataFrame(rows),
+                use_container_width=True,
+                hide_index=True
+            )

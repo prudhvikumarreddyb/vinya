@@ -157,13 +157,9 @@ def delete_loan(index: int) -> None:
 # PAYMENTS (MONTH-SAFE)
 # ==================================================
 def add_payment(loan_index: int, amount: float, note: str, month_key: Optional[str] = None) -> None:
-    """
-    month_key format: YYYY-MM
-    Allows backdated payments.
-    Enforces ONE EMI per loan per month.
-    """
     data = load_finance()
-    loans: List[Dict[str, Any]] = data.get("loans", [])
+    loans = data.get("loans", [])
+
     if loan_index < 0 or loan_index >= len(loans):
         raise IndexError("Loan index out of range")
 
@@ -173,37 +169,35 @@ def add_payment(loan_index: int, amount: float, note: str, month_key: Optional[s
         month_key = datetime.utcnow().strftime("%Y-%m")
 
     payment_date = datetime.strptime(month_key + "-01", "%Y-%m-%d").date()
+
     if payment_date > date.today():
         raise ValueError("Future payments are not allowed")
 
-    if loan.get("loan_type") == "BANK" and note == "EMI":
+    # 🚫 one EMI per month
+    if loan["loan_type"] == "BANK" and note == "EMI":
         for p in loan.get("payments", []):
-            try:
-                paid_month = datetime.fromisoformat(p["date"]).strftime("%Y-%m")
-            except Exception:
-                continue
-            if p.get("note") == "EMI" and paid_month == month_key:
+            if p.get("note") == "EMI" and p.get("date", "").startswith(month_key):
                 raise ValueError(f"EMI already paid for {month_key}")
 
-    if loan.get("loan_type") == "INTEREST_ONLY" and note == "PRINCIPAL":
-        loan["principal"] = max(0, loan.get("principal", 0) - amount)
-    # ✅ Reduce principal for BANK EMI payments
+    # 💸 PRINCIPAL reduction for interest-only
+    if loan["loan_type"] == "INTEREST_ONLY" and note == "PRINCIPAL":
+        loan["principal"] = max(0, loan["principal"] - amount)
+
+    # 💰 EMI principal reduction (BANK)
     if loan["loan_type"] == "BANK" and note == "EMI":
-        rate = loan.get("rate", 0) / 12 / 100
-        principal = loan.get("principal", 0)
-
-        interest = principal * rate
+        rate = loan["rate"] / 12 / 100
+        interest = loan["principal"] * rate
         principal_component = max(0, amount - interest)
-
         loan["principal"] = round(
-            max(0, principal - principal_component), 2
+            max(0, loan["principal"] - principal_component), 2
         )
 
-        loan.setdefault("payments", []).append({
-            "date": payment_date.isoformat(),
-            "amount": amount,
-            "note": note
-        })
+    # ✅ ✅ ✅ THIS WAS MISSING
+    loan.setdefault("payments", []).append({
+        "date": payment_date.isoformat(),
+        "amount": amount,
+        "note": note
+    })
 
     save_finance(data, tag=f"payment_{note.lower()}")
 
