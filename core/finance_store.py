@@ -51,6 +51,41 @@ def _create_backup(tag: str = "auto") -> None:
                     old.unlink()
                 except Exception:
                     pass
+def compute_totals(include_future_interest: bool = False):
+    """
+    Single source of truth for totals.
+    Used by BOTH dashboard and finance screens.
+    """
+    data = load_finance()
+    loans = data.get("loans", [])
+
+    total_principal = 0.0
+    total_interest_future = 0.0
+    total_emi = 0.0
+
+    for loan in loans:
+        principal = loan.get("principal", 0)
+        total_principal += principal
+
+        if loan.get("loan_type") == "BANK":
+            total_emi += loan.get("emi", 0)
+
+            # future interest estimate
+            try:
+                schedule, _ = build_amortization_schedule(loan)
+                total_interest_future += sum(r.get("interest", 0) for r in schedule)
+            except Exception:
+                pass
+
+    return {
+        "principal_outstanding": round(total_principal, 2),
+        "future_interest": round(total_interest_future, 2),
+        "total_outstanding": round(
+            total_principal + (total_interest_future if include_future_interest else 0),
+            2
+        ),
+        "total_emi": round(total_emi, 2),
+    }
 
 # ==================================================
 # LOAD / SAVE
