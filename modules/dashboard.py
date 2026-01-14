@@ -8,15 +8,16 @@ NO calculations here
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-from core.health_store import health_today_summary
-from core.shared_insights import finance_health_insight
-from core.finance_store import dashboard_summary
-from core.health_store import protect_streak
-from core.finance_store import load_finance
-from core.health_store import weekly_health_recap
-from core.health_store import health_signal_today
-from core.health_store import health_dashboard_card
 
+from core.health_store import (
+    health_today_summary,
+    protect_streak,
+    weekly_health_recap,
+    health_signal_today,
+)
+
+from core.shared_insights import finance_health_insight
+from core.finance_store import load_finance
 from core.finance_metrics import (
     portfolio_summary,
     loan_outstanding,
@@ -24,34 +25,43 @@ from core.finance_metrics import (
     loan_health_status,
     next_gentle_action,
 )
+
 from core.life_store import gentle_life_insight
+from core.career_store import weekly_growth_signal, gentle_nudge
 
-insight = gentle_life_insight()
 
-if insight:
-    st.markdown("### 🧠 Gentle Insight")
-    st.info(insight)
-
-if protect_streak():
-    st.warning(
-        "🫶 You’ve had a few heavy days in a row. "
-        "Consider resting, reducing load, or talking to someone you trust."
-    )
 # ==================================================
 # SESSION STATE
 # ==================================================
 if "insight_history" not in st.session_state:
     st.session_state.insight_history = []
 
+
 # ==================================================
 # MAIN DASHBOARD
 # ==================================================
 def render_dashboard():
     st.subheader("🏠 Dashboard")
-    st.markdown("### 🧠 Health")
-# ==================================================
-# 🩺 TODAY’S HEALTH
-# ==================================================
+
+    # ==================================================
+    # 🌱 GLOBAL GENTLE INSIGHT
+    # ==================================================
+    insight = gentle_life_insight()
+    if insight:
+        st.markdown("### 🧠 Gentle Insight")
+        st.info(insight)
+
+    if protect_streak():
+        st.warning(
+            "🫶 You’ve had a few heavy days in a row. "
+            "Consider resting, reducing load, or talking to someone you trust."
+        )
+
+    # ==================================================
+    # 🩺 TODAY’S HEALTH
+    # ==================================================
+    st.markdown("## 🩺 Today’s Health")
+
     signal = health_signal_today()
 
     status_color = {
@@ -60,44 +70,39 @@ def render_dashboard():
         "OPTIMIZE": "🟢"
     }.get(signal["status"], "🟡")
 
-    st.markdown("### 🩺 Today’s Health")
     st.info(f"{status_color} **{signal['status']}** — {signal['message']}")
 
     recap = weekly_health_recap()
-
     if recap:
-        st.markdown("### 🧠 Weekly Health Reflection")
+        st.markdown("### 🧠 Weekly Reflection")
         st.info(recap["message"])
+
     if st.button("➕ Log today (quick)"):
         from core.health_store import quick_log_today
-
         quick_log_today()
         st.toast("Health logged. Thanks for checking in 🤍")
         st.rerun()
 
     health = health_today_summary()
 
-    with st.container():
-        st.markdown(
-            f"""
-            <div style="
-                background:{health['color']};
-                padding:14px;
-                border-radius:10px;
-                margin-bottom:12px;
-            ">
-                <strong>🧠 Health Today</strong><br/>
-                {health['message']}
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-        finance = dashboard_summary()
-        gentle = finance_health_insight(finance, health["status"])
+    st.markdown(
+        f"""
+        <div style="
+            background:{health['color']};
+            padding:14px;
+            border-radius:10px;
+            margin-bottom:12px;
+        ">
+            <strong>🧠 Health Today</strong><br/>
+            {health['message']}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-        if gentle:
-            st.info(gentle)
-
+    # ==================================================
+    # 💰 FINANCE SNAPSHOT
+    # ==================================================
     data = load_finance()
     loans = data.get("loans", [])
 
@@ -105,44 +110,36 @@ def render_dashboard():
         st.info("No loans added yet. Add a loan to see insights.")
         return
 
-    # ==================================================
-    # 📊 PORTFOLIO SUMMARY (SINGLE SOURCE OF TRUTH)
-    # ==================================================
     summary = portfolio_summary(loans)
 
     c1, c2, c3 = st.columns(3)
 
-    c1.metric(
-        "💰 Total Outstanding",
-        f"₹ {summary['total_outstanding']:,.0f}",
-    )
-
-    c2.metric(
-        "📆 Monthly Commitment",
-        f"₹ {summary['total_monthly']:,.0f}",
-    )
+    c1.metric("💰 Total Outstanding", f"₹ {summary['total_outstanding']:,.0f}")
+    c2.metric("📆 Monthly Commitment", f"₹ {summary['total_monthly']:,.0f}")
 
     if summary["overdue_loans"] > 0:
         c3.metric("Status", "🔴 Action Needed")
     else:
         c3.metric("Status", "🟢 You’re Safe This Month")
 
+    # Finance × Health gentle insight
+    gentle = finance_health_insight(summary, health["status"])
+    if gentle:
+        st.info(gentle)
+
     # ==================================================
     # 🧠 NEXT GENTLE ACTION
     # ==================================================
     action = next_gentle_action(summary)
-
     st.info(f"🧠 **Next gentle action:** {action}")
 
-    # store insight history (read-only log)
+    # Cap insight history to last 50
     st.session_state.insight_history.append({
         "time": datetime.now().strftime("%d %b %Y, %I:%M %p"),
         "message": action,
     })
+    st.session_state.insight_history = st.session_state.insight_history[-50:]
 
-    # ==================================================
-    # 📜 INSIGHT HISTORY (READ-ONLY)
-    # ==================================================
     with st.expander("🧠 Insight History (read-only)"):
         if st.session_state.insight_history:
             st.dataframe(
@@ -154,7 +151,7 @@ def render_dashboard():
             st.caption("No insights recorded yet.")
 
     # ==================================================
-    # 📋 LOAN SNAPSHOT (LIGHTWEIGHT)
+    # 📋 LOAN SNAPSHOT
     # ==================================================
     st.markdown("## 📋 Loan Snapshot")
 
@@ -168,24 +165,18 @@ def render_dashboard():
             "Outstanding (₹)": f"₹ {loan_outstanding(loan):,.2f}",
         })
 
-    st.dataframe(
-        pd.DataFrame(rows),
-        use_container_width=True,
-        hide_index=True,
-    )
-# ==================================================
-# 🧠 HEALTH — TODAY
-# ==================================================
-st.markdown("### 🧠 Today’s Health")
+    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
-health = health_dashboard_card()
+    # ==================================================
+    # 🧠 CAREER SNAPSHOT
+    # ==================================================
+    st.markdown("## 🧠 Career")
 
-status = health["status"]
-message = health["message"]
+    signal = weekly_growth_signal()
+    nudge = gentle_nudge()
 
-if status == "SAFE":
-    st.success(f"🟢 {message}")
-elif status == "CARE":
-    st.warning(f"🟡 {message}")
-else:
-    st.error(f"🔴 {message}")
+    c1, c2, c3 = st.columns(3)
+
+    c1.metric("Weekly Status", signal["status"])
+    c2.metric("Practice Minutes", f"{signal['total_minutes']} mins")
+    c3.markdown(f"👉 **Next gentle action:** {nudge}")

@@ -1,0 +1,55 @@
+{
+  "skills": [
+    {
+      "name": "Java",
+      "level": 5,
+      "weekly_minutes": 75,
+      "last_practiced": "2026-01-14",
+      "confidence": 1,
+      "logs": [
+        {
+          "date": "2026-01-14",
+          "minutes": 30
+        },
+        {
+          "date": "2026-01-14",
+          "minutes": 45
+        }
+      ]
+    }
+  ],
+  "insights": [
+    {
+      "date": "2026-01-14",
+      "status": "STALL",
+      "total_minutes": 0,
+      "message": "Low practice detected. Restart gently with one session."
+    }
+  ],
+  "logs": [
+    {
+      "date": "2026-01-14",
+      "minutes": 60,
+      "area": "Tech",
+      "note": "Testing"
+    },
+    {
+      "date": "2026-01-14",
+      "minutes": 35,
+      "area": "Tech",
+      "note": "test"
+    },
+    {
+      "date": "2026-01-14",
+      "minutes": 65,
+      "area": "Communication",
+      "note": "fudged"
+    },
+    {
+      "date": "2026-01-14",
+      "minutes": 25,
+      "area": "System Design",
+      "note": "vbsghg"
+    }
+  ]
+}
