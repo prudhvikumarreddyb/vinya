@@ -1,0 +1,9 @@
+[
+  {
+    "id": "DAILY_DIGEST",
+    "name": "Daily Digest",
+    "description": "Generate your daily health, finance & career summary.",
+    "enabled": false,
+    "last_run": "2026-01-14 13:53"
+  }
+]

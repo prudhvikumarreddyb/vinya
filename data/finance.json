@@ -8,8 +8,7 @@
       "tenure": 24,
       "loan_type": "BANK",
       "payments": [],
-      "start_date": "2026-01-14",
-      "taken_amount": 500000
+      "start_date": "2026-01-14"
     }
   ]
 }

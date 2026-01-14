@@ -1,0 +1,36 @@
+[
+  {
+    "timestamp": "2026-01-14T13:44",
+    "health": {
+      "status": "PROTECT",
+      "message": "Protect today: high load detected. Go gently."
+    },
+    "finance": {
+      "status": "TIGHT",
+      "message": "\ud83d\udfe1 Finances are tight. One prepayment can help.",
+      "total_outstanding": 1508192.66
+    },
+    "career": {
+      "nudge": "Pick one small improvement task and start."
+    },
+    "gentle_action": "You\u2019re on track. Stay consistent.",
+    "saved_at": "2026-01-14T08:14:23.574143"
+  },
+  {
+    "timestamp": "2026-01-14T13:53",
+    "health": {
+      "status": "PROTECT",
+      "message": "Protect today: high load detected. Go gently."
+    },
+    "finance": {
+      "status": "TIGHT",
+      "message": "\ud83d\udfe1 Finances are tight. One prepayment can help.",
+      "total_outstanding": 1508192.66
+    },
+    "career": {
+      "nudge": "Pick one small improvement task and start."
+    },
+    "gentle_action": "You\u2019re on track. Stay consistent.",
+    "saved_at": "2026-01-14T08:23:58.170986"
+  }
+]

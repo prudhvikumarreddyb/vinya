@@ -1,4 +1,3 @@
-# modules/dashboard.py
 """
 Dashboard UI for Vinya
 READS data + metrics only
@@ -8,6 +7,7 @@ NO calculations here
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+import uuid
 
 from core.health_store import (
     health_today_summary,
@@ -28,6 +28,9 @@ from core.finance_metrics import (
 
 from core.life_store import gentle_life_insight
 from core.career_store import weekly_growth_signal, gentle_nudge
+from core.automation_store import list_automations, toggle_automation
+from core.digest_store import latest_digest
+from core.daily_digest import load_latest_digest
 
 
 # ==================================================
@@ -36,12 +39,33 @@ from core.career_store import weekly_growth_signal, gentle_nudge
 if "insight_history" not in st.session_state:
     st.session_state.insight_history = []
 
+if "dashboard_run_id" not in st.session_state:
+    st.session_state.dashboard_run_id = uuid.uuid4().hex
+
 
 # ==================================================
 # MAIN DASHBOARD
 # ==================================================
 def render_dashboard():
+    run_id = st.session_state.dashboard_run_id
+
     st.subheader("🏠 Dashboard")
+    # ==================================================
+    # 📰 DAILY DIGEST PREVIEW
+    # ==================================================
+    latest = latest_digest()
+
+    if latest:
+        with st.expander("📰 Latest Daily Digest"):
+            st.json({
+                "Health": latest.get("health"),
+                "Finance": latest.get("finance"),
+                "Career": latest.get("career"),
+                "Gentle Action": latest.get("gentle_action"),
+                "Timestamp": latest.get("timestamp"),
+            })
+    else:
+        st.caption("No daily digest generated yet.")
 
     # ==================================================
     # 🌱 GLOBAL GENTLE INSIGHT
@@ -56,6 +80,34 @@ def render_dashboard():
             "🫶 You’ve had a few heavy days in a row. "
             "Consider resting, reducing load, or talking to someone you trust."
         )
+    # ==================================================
+    # 📰 LATEST DAILY DIGEST
+    # ==================================================
+    digest = load_latest_digest()
+    st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+
+    if digest:
+        ts = datetime.fromisoformat(digest["timestamp"])
+        pretty_time = ts.strftime("%d %b • %I:%M %p")
+
+        st.markdown("## 📰 Daily Digest")
+        st.caption(f"Last generated: {pretty_time}")
+
+        c1, c2, c3 = st.columns(3)
+
+        with c1:
+            st.markdown("### 🩺 Health")
+            st.info(f"{digest['health']['status']} — {digest['health']['message']}")
+
+        with c2:
+            st.markdown("### 💰 Finance")
+            st.info(f"{digest['finance']['status']} — {digest['finance']['message']}")
+
+        with c3:
+            st.markdown("### 🧠 Career")
+            st.info(digest["career"]["nudge"])
+
+        st.success(f"🌱 **Gentle focus today:** {digest['gentle_action']}")
 
     # ==================================================
     # 🩺 TODAY’S HEALTH
@@ -133,7 +185,7 @@ def render_dashboard():
     action = next_gentle_action(summary)
     st.info(f"🧠 **Next gentle action:** {action}")
 
-    # Cap insight history to last 50
+    # Cap insight history to last 50 entries
     st.session_state.insight_history.append({
         "time": datetime.now().strftime("%d %b %Y, %I:%M %p"),
         "message": action,
@@ -166,6 +218,45 @@ def render_dashboard():
         })
 
     st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+    # ==================================================
+    # ⚙️ AUTOMATIONS
+    # ==================================================
+    st.markdown("---")
+    st.markdown("## ⚙️ Automations")
+
+    autos = list_automations()
+
+    if not autos:
+        st.info("No automations configured yet.")
+    else:
+        for idx, auto in enumerate(autos):
+            c1, c2, c3 = st.columns([3, 1, 2])
+
+            with c1:
+                st.markdown(f"**{auto['name']}**")
+                st.caption(auto.get("description", ""))
+
+            with c2:
+                toggle_key = f"{run_id}_auto_toggle_{auto['id']}_{idx}"
+
+                enabled = st.toggle(
+                    "Enabled",
+                    value=auto.get("enabled", True),
+                    key=toggle_key,
+                )
+
+                if enabled != auto.get("enabled", True):
+                    toggle_automation(auto["id"], enabled)
+                    st.toast("Automation updated ✅")
+                    st.rerun()
+
+            with c3:
+                last_run = auto.get("last_run")
+                if last_run:
+                    st.caption(f"Last run: {last_run}")
+                else:
+                    st.caption("Never run yet")
 
     # ==================================================
     # 🧠 CAREER SNAPSHOT
