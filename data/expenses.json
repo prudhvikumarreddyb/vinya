@@ -1,0 +1,112 @@
+{
+  "expenses": [
+    {
+      "id": "a4d97e00-f934-4c61-ad93-29041f374431",
+      "date": "2026-01-16",
+      "category": "Food",
+      "amount": 200.0,
+      "mode": "UPI",
+      "note": "",
+      "created_at": "2026-01-16T15:50:23.642655"
+    },
+    {
+      "id": "10870678-f501-4244-804a-8373465134ef",
+      "date": "2026-01-16",
+      "category": "Groceries",
+      "amount": 2000.0,
+      "mode": "UPI",
+      "note": "urueru",
+      "created_at": "2026-01-16T15:50:57.660937"
+    },
+    {
+      "id": "93d336e0-0430-4954-b566-841d263c226a",
+      "date": "2025-01-16",
+      "category": "Food",
+      "amount": 4252.0,
+      "mode": "UPI",
+      "note": "",
+      "created_at": "2026-01-16T15:52:17.538473"
+    },
+    {
+      "id": "122affd6-b198-4b06-8e46-b2db9c3740bb",
+      "date": "2025-03-22",
+      "category": "Food",
+      "amount": 45254.0,
+      "mode": "UPI",
+      "note": "",
+      "created_at": "2026-01-16T15:52:55.757459"
+    },
+    {
+      "id": "e15b3cc7-cdb0-4cc8-989d-d7eb14bde89a",
+      "date": "2026-01-16",
+      "category": "Food",
+      "amount": 1.0,
+      "mode": "UPI",
+      "note": "",
+      "created_at": "2026-01-16T15:52:57.226071"
+    },
+    {
+      "id": "0f03cac8-62ca-41bd-a3fe-c157a2dbfc65",
+      "date": "2026-01-16",
+      "category": "Food",
+      "amount": 1.0,
+      "mode": "UPI",
+      "note": "",
+      "created_at": "2026-01-16T15:53:05.386699"
+    },
+    {
+      "id": "0b5b07ec-403a-4a71-aec4-d51f141f565b",
+      "date": "2025-03-13",
+      "category": "Food",
+      "amount": 7777.0,
+      "mode": "UPI",
+      "note": "dodgy",
+      "created_at": "2026-01-17T13:07:44.965217"
+    },
+    {
+      "id": "4818d9a5-59b5-4deb-886e-08c181771b1c",
+      "date": "2026-01-01",
+      "category": "Food",
+      "amount": 78.0,
+      "mode": "UPI",
+      "note": "",
+      "created_at": "2026-01-17T13:08:06.017895"
+    },
+    {
+      "id": "a537cba0-852b-46ef-afaf-af848855e398",
+      "date": "2025-01-10",
+      "category": "Food",
+      "amount": 1.0,
+      "mode": "UPI",
+      "note": "",
+      "created_at": "2026-01-17T13:08:14.911794"
+    },
+    {
+      "id": "073b9926-deeb-4daa-8e52-21068fda2de5",
+      "date": "2026-01-17",
+      "category": "Food",
+      "amount": 666.0,
+      "mode": "UPI",
+      "note": "ridge",
+      "created_at": "2026-01-17T13:08:50.843923"
+    },
+    {
+      "id": "14afcbc4-a741-4fc7-8ef9-09564be08112",
+      "date": "2024-01-18",
+      "category": "Food",
+      "amount": 668989.0,
+      "mode": "UPI",
+      "note": "",
+      "created_at": "2026-01-17T13:15:00.631345"
+    },
+    {
+      "id": "b478d535-c7e0-4ab9-b5d5-d226a5ed20a2",
+      "date": "2025-04-17",
+      "category": "Food",
+      "amount": 67.0,
+      "mode": "UPI",
+      "note": "",
+      "created_at": "2026-01-17T13:15:21.433397"
+    }
+  ]
+}

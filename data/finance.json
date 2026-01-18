@@ -1,14 +1,18 @@
 {
   "loans": [
     {
-      "name": "Test Loan",
-      "principal": 500000,
-      "rate": 12,
-      "emi": 25000,
-      "tenure": 24,
+      "name": "ICICI",
+      "principal": 1200000.0,
+      "taken_amount": 1200000.0,
+      "rate": 11.0,
       "loan_type": "BANK",
+      "interest_frequency": "MONTHLY",
+      "start_date": "2024-01-18",
       "payments": [],
-      "start_date": "2026-01-14"
+      "tenure": 72,
+      "emi": 22840.89480084678,
+      "loan_no": "4363563",
+      "start_month": "2024-01"
     }
   ]
 }

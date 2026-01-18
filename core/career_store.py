@@ -19,7 +19,8 @@ def _safe_default():
     return {
         "logs": []  # each: {date, minutes, area, note}
     }
-
+def _new_id(prefix: str):
+    return f"{prefix}-{datetime.utcnow().strftime('%Y%m%d-%H%M%S-%f')}"
 
 def _ensure_dir():
     CAREER_DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -226,5 +227,326 @@ def gentle_nudge():
         return "Keep the streak alive — even 20 mins is enough."
 
     return "Pick one small improvement task and start."
+"""
+Career Store — Vinya v1
+Manages:
+- Education
+- Work Experience
+- Skills
+- Career meta
+
+Single source of truth for career profile.
+"""
+
+import json
+import shutil
+from pathlib import Path
+from datetime import datetime
+from typing import Dict, Any, List
+import uuid
+
+# ==================================================
+# PATHS
+# ==================================================
+CAREER_DATA_FILE = Path("data/career.json")
+BACKUP_DIR = Path("data/backups")
+MAX_BACKUPS = 10
+
+
+# ==================================================
+# INTERNAL HELPERS
+# ==================================================
+def _ensure_dirs():
+    CAREER_DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
+    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _timestamp():
+    return datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+
+def _safe_default():
+    return {
+        "profile": {
+            "name": "",
+            "headline": "",
+            "summary": ""
+        },
+        "education": [],
+        "work": [],
+        "skills": [],
+        "meta": {
+            "version": "career-v1",
+            "last_updated": None
+        }
+    }
+
+
+def _atomic_write(data: Dict[str, Any]):
+    tmp = CAREER_DATA_FILE.with_suffix(".tmp")
+    with open(tmp, "w") as f:
+        json.dump(data, f, indent=2, default=str)
+    tmp.replace(CAREER_DATA_FILE)
+
+
+def _create_backup(tag="auto"):
+    if CAREER_DATA_FILE.exists():
+        name = f"career_{_timestamp()}_{tag}.json"
+        shutil.copy2(CAREER_DATA_FILE, BACKUP_DIR / name)
+
+        backups = sorted(BACKUP_DIR.glob("career_*.json"))
+        if len(backups) > MAX_BACKUPS:
+            for old in backups[:-MAX_BACKUPS]:
+                try:
+                    old.unlink()
+                except Exception:
+                    pass
+
+
+def _validate_schema(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Ensures required top-level keys exist and types are sane.
+    Auto-heals if possible.
+    """
+    changed = False
+
+    if "education" not in data or not isinstance(data["education"], list):
+        data["education"] = []
+        changed = True
+
+    if "work" not in data or not isinstance(data["work"], list):
+        data["work"] = []
+        changed = True
+
+    if "skills" not in data or not isinstance(data["skills"], list):
+        data["skills"] = []
+        changed = True
+
+    if "meta" not in data or not isinstance(data["meta"], dict):
+        data["meta"] = {}
+        changed = True
+
+    data["meta"].setdefault("version", "career-v1")
+    data["meta"].setdefault("last_updated", None)
+
+    if changed:
+        data["meta"]["last_updated"] = datetime.utcnow().isoformat()
+
+    return data
+
+
+# ==================================================
+# LOAD / SAVE
+# ==================================================
+def load_career() -> Dict[str, Any]:
+    _ensure_dirs()
+
+    if not CAREER_DATA_FILE.exists():
+        _atomic_write(_safe_default())
+
+    try:
+        with open(CAREER_DATA_FILE, "r") as f:
+            data = json.load(f)
+    except Exception:
+        _create_backup(tag="corrupt")
+        data = _safe_default()
+        _atomic_write(data)
+
+    data = _validate_schema(data)
+    return data
+
+
+def save_career(data: Dict[str, Any], tag="auto"):
+    _ensure_dirs()
+    _create_backup(tag=tag)
+
+    data["meta"]["last_updated"] = datetime.utcnow().isoformat()
+    data = _validate_schema(data)
+
+    _atomic_write(data)
+
+
+# ==================================================
+# ID GENERATOR
+# ==================================================
+def _new_id(prefix: str):
+    return f"{prefix}-{uuid.uuid4().hex[:8]}"
+
+
+# ==================================================
+# EDUCATION
+# ==================================================
+def add_education(
+    degree: str,
+    field: str,
+    institution: str,
+    start_year: int,
+    end_year: int | None = None,
+    score: str | None = None,
+    notes: str | None = None,
+):
+    data = load_career()
+
+    entry = {
+        "id": _new_id("edu"),
+        "degree": degree.strip(),
+        "field": field.strip(),
+        "institution": institution.strip(),
+        "start_year": int(start_year),
+        "end_year": int(end_year) if end_year else None,
+        "score": score,
+        "notes": notes,
+    }
+
+    data["education"].append(entry)
+    save_career(data, tag="add_education")
+
+
+def delete_education(edu_id: str):
+    data = load_career()
+    before = len(data["education"])
+    data["education"] = [e for e in data["education"] if e["id"] != edu_id]
+
+    if len(data["education"]) != before:
+        save_career(data, tag="delete_education")
+
+
+# ==================================================
+# WORK EXPERIENCE
+# ==================================================
+def add_work(
+    company: str,
+    role: str,
+    start_date: str,     # YYYY-MM
+    end_date: str | None = None,
+    current: bool = False,
+    location: str | None = None,
+    tech_stack: List[str] | None = None,
+    achievements: List[str] | None = None,
+    impact_tags: List[str] | None = None,
+):
+    data = load_career()
+
+    entry = {
+        "id": _new_id("work"),
+        "company": company.strip(),
+        "role": role.strip(),
+        "start_date": start_date,
+        "end_date": end_date,
+        "current": bool(current),
+        "location": location,
+        "tech_stack": tech_stack or [],
+        "achievements": achievements or [],
+        "impact_tags": impact_tags or [],
+    }
+
+    # Auto-unset other "current" roles if this is current
+    if current:
+        for w in data["work"]:
+            w["current"] = False
+
+    data["work"].append(entry)
+    save_career(data, tag="add_work")
+
+
+def delete_work(work_id: str):
+    data = load_career()
+    before = len(data["work"])
+    data["work"] = [w for w in data["work"] if w["id"] != work_id]
+
+    if len(data["work"]) != before:
+        save_career(data, tag="delete_work")
+
+def migrate_missing_skill_ids(data):
+    changed = False
+
+    for skill in data.get("skills", []):
+        if "id" not in skill:
+            skill["id"] = _new_id("SKILL")
+            changed = True
+
+    if changed:
+        save_career(data, tag="migrate_skill_ids")
+
+# ==================================================
+# SKILLS
+# ==================================================
+def add_skill(
+    name: str,
+    category: str,
+    level: str,
+    last_used: str | None = None,
+    evidence: List[str] | None = None,
+):
+    data = load_career()
+
+    entry = {
+        "id": _new_id("skill"),
+        "name": name.strip(),
+        "category": category.strip(),
+        "level": level,
+        "last_used": last_used,
+        "evidence": evidence or [],
+    }
+
+    data["skills"].append(entry)
+    save_career(data, tag="add_skill")
+
+
+def delete_skill(skill_id):
+    data = load_career()
+
+    cleaned = []
+    for s in data.get("skills", []):
+        sid = s.get("id") or s.get("name")   # 👈 fallback for old data
+
+        if sid != skill_id:
+            cleaned.append(s)
+
+    data["skills"] = cleaned
+    save_career(data)
+
+
+
+# ==================================================
+# READ HELPERS (FOR UI / RESUME ENGINE LATER)
+# ==================================================
+def list_education() -> List[Dict[str, Any]]:
+    return load_career().get("education", [])
+
+
+def list_work() -> List[Dict[str, Any]]:
+    return load_career().get("work", [])
+
+
+def list_skills() -> List[Dict[str, Any]]:
+    return load_career().get("skills", [])
+
+
+def current_role():
+    work = load_career().get("work", [])
+    for w in work:
+        if w.get("current"):
+            return w
+    return None
+# ==================================================
+# PROFILE
+# ==================================================
+
+def update_profile(name: str, headline: str, summary: str):
+    data = load_career()
+
+    data["profile"] = {
+        "name": name.strip(),
+        "headline": headline.strip(),
+        "summary": summary.strip(),
+    }
+
+    save_career(data, tag="update_profile")
+
+
+def get_profile():
+    data = load_career()
+    return data.get("profile", {})
 
 

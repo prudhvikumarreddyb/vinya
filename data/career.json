@@ -1,23 +1,5 @@
 {
-  "skills": [
-    {
-      "name": "Java",
-      "level": 5,
-      "weekly_minutes": 75,
-      "last_practiced": "2026-01-14",
-      "confidence": 1,
-      "logs": [
-        {
-          "date": "2026-01-14",
-          "minutes": 30
-        },
-        {
-          "date": "2026-01-14",
-          "minutes": 45
-        }
-      ]
-    }
-  ],
+  "skills": [],
   "insights": [
     {
       "date": "2026-01-14",
@@ -57,5 +39,22 @@
       "area": "Finance",
       "note": "ajadgdd"
     }
-  ]
+  ],
+  "education": [
+    {
+      "id": "edu-3410a479",
+      "degree": "hdgdh",
+      "field": "djsfhj",
+      "institution": "jfhjfhjf",
+      "start_year": 2015,
+      "end_year": 2015,
+      "score": "jdfhdfhj",
+      "notes": "fhdjdhjfh"
+    }
+  ],
+  "work": [],
+  "meta": {
+    "version": "career-v1",
+    "last_updated": "2026-01-16T15:36:14.477932"
+  }
 }
